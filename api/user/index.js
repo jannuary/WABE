@@ -72,7 +72,7 @@ app.post('/register',  (req, res, next)=>{
             }else next()
         }
     })
-},(res, req)=>{
+},(req, res)=>{
     let data = {"userName": query.userName,"password": query.password,"status":"1"};
     db.insertOne(collection, data, (err, results)=>{
         if (err) {
@@ -95,7 +95,7 @@ app.post('/register',  (req, res, next)=>{
 
 // 登陆============
 {
-app.post('/login', (res, req, next)=>{
+app.post('/login', (req, res, next)=>{
     // 查询是否存在
     let whereStr = {'userName': query.userName};
 
@@ -140,21 +140,21 @@ app.post('/login', (res, req, next)=>{
 // 注销返回的数据
 
 app.post("/logout",
-upload.array(), (res, req, next)=>{   // 字段判断
+upload.array(), (req, res, next)=>{   // 字段判断
     result = {
         status : 0,
         info: 'fail',
     }
 
-    query = res.body;
+    query = req.body;
     
     if(query.userID == undefined){
         result.info = info.err_key;
-        req.json(JSON.stringify(result));
+        res.json(JSON.stringify(result));
     }
     else next()
 },
-(res, req)=>{ // 注销
+(req, res)=>{ // 注销
     console.log("logout");
     console.log(query)
     
@@ -175,11 +175,11 @@ upload.array(), (res, req, next)=>{   // 字段判断
                     else{
                         result.status = 1;
                         result.info = info.ok;
-                        req.json(JSON.stringify(result));
+                        res.json(JSON.stringify(result));
                     }
                 })
             }else {
-                req.json(JSON.stringify(result));
+                res.json(JSON.stringify(result));
             }
         }
     });

@@ -19,6 +19,10 @@ let curd = {
       (dbo)=>dbo.collection(collection). find(whereStr).toArray(callback)
     ),
 
+    findAndSort : (collection, whereStr, sort, callback)=>MongoClient_connect(
+        (dbo)=>dbo.collection(collection). find(whereStr).sort(sort).toArray(callback)
+      ),
+
     insertOne : (collection, data, callback)=>MongoClient_connect(
         (dbo)=>dbo.collection(collection).insertOne(data,callback)
     ),
