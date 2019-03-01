@@ -187,13 +187,23 @@ upload.array(), (req, res, next)=>{   // 字段判断
 });
 }
 
+// 头像
 let avatar = require('./avatar.js');
 let avatar_path = './public/avatar/'; //设置文件存储路径
 
 app.post('/avatar', multer({
    dest: avatar_path   //upload文件如果不存在则会自己创建一个。
 }).single('file'), avatar.upload);
-
 app.get('/avatar', upload.array(), avatar.load);
+
+// 个性签名
+let signature = require('./signature.js')
+
+app.post('/sign',multer().array(),signature.sign)
+
+// 用户信息
+let userMsg = require('./userMsg.js')
+
+app.post('/msg',multer().array(), userMsg.msg)
 
 module.exports = app;

@@ -5,29 +5,21 @@
  */
 
 var app = require('../app');
-var debug = require('debug')('wise:server');
-var https = require('https');
-var fs = require("fs");
+var debug = require('debug')('init:server');
+var http = require('http');
+
 /**
  * Get port from environment and store in Express.
  */
 
- var port = normalizePort(process.env.PORT || '3000');
+var port = normalizePort(process.env.PORT || '3000');
 app.set('port', port);
 
 /**
  * Create HTTP server.
  */
 
-const options = {
-  key: fs.readFileSync('bin/ssl/server_no_passwd.key', 'utf8'),
-  cert: fs.readFileSync('bin/ssl/server.crt', 'utf8'),
-  requestCert: false,
-  rejectUnauthorized: false
-  
-};
-
-var server = https.createServer(options,app);
+var server = http.createServer(app);
 
 /**
  * Listen on provided port, on all network interfaces.

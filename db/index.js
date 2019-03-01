@@ -21,7 +21,7 @@ let curd = {
 
     findAndSort : (collection, whereStr, sort, callback)=>MongoClient_connect(
         (dbo)=>dbo.collection(collection). find(whereStr).sort(sort).toArray(callback)
-      ),
+    ),
 
     insertOne : (collection, data, callback)=>MongoClient_connect(
         (dbo)=>dbo.collection(collection).insertOne(data,callback)
@@ -29,6 +29,19 @@ let curd = {
 
     updateOne : (collection, whereStr, updateStr, callback)=>MongoClient_connect(
         (dbo)=>dbo.collection(collection).updateOne(whereStr, updateStr, callback)
+    ),
+
+    deleteOne : (collection, whereStr, callback)=>MongoClient_connect(
+        (dbo)=>dbo.collection(collection).deleteOne(whereStr, callback)
+    ),
+
+    deleteMany : (collection, whereStr, callback)=>MongoClient_connect(
+        (dbo)=>dbo.collection(collection).deleteMany(whereStr, callback)
+    ),
+
+    // 左连接
+    aggregate : (collection, whereStr, callback)=>MongoClient_connect(
+        (dbo)=>dbo.collection(collection).aggregate([lookup]).toArray(callback)
     ),
 }
 

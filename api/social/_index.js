@@ -68,7 +68,6 @@ app.post("/talk",(req, res, next)=>{
 });
 
 app.post('/x',(req, res)=>{
-    
     res.sendFile('../../public');
 });
 

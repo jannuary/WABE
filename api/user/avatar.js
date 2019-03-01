@@ -87,27 +87,22 @@ let avatar_img = (req, res, next)=>{
     // 查找
     db.find(collection, whereStr, (err, _rlts)=>{
         if (err) {
-            res.send(502);
+            res.send('sss');
         } 
         else{
-            
             
             if(_rlts.length == 0){
                 res.json({status: 0});
                 return;
             }
-
+            console.log(_rlts)
             let _results = _rlts.shift();
+            console.log(_results)
+            const uploadDir='./public/avatar/';
             if(_results.avatar == undefined){   // 没有设置头像，则默认
-                res.send({
-                    status: 1,
-                    img: avatarName
-                });
+                res.sendfile(uploadDir + 'default.jpg')
             }else{
-                res.send({
-                    status: 1,
-                    img: _results.avatar
-                });
+                res.sendfile(uploadDir + _results.avatar)
             }
         }
     })

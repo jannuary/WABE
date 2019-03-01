@@ -17,9 +17,9 @@ const uploadDir='./public/social/';
 //设置multer upload
 var upload=multer({dest:uploadDir}).array('images');
 
-// post说说请求 提交表单,
+// post说说请求 提交表单 （文件）
 // 其中图片的字段名必须是与 array 规定的一致，即 imgages
-app.post('/talk',(req,res,next)=>{
+app.post('/talk_pic',(req,res,next)=>{
     //多个文件上传
     upload(req,res,(err)=>{
         if(err){
@@ -79,6 +79,22 @@ app.post('/talk',(req,res,next)=>{
             
             // 所有文件上传成功,返回文件名字
             let imgName = reqFile();
+            console.log(imgName)
+            // 回复信息
+            let result = {
+                status: imgName==undefined ? 0: 1,
+                images: imgName==undefined ? undefined : imgName.split('|'),
+            };
+
+            res.json(JSON.stringify(result));
+        }
+
+    });
+});
+
+// post说说请求 提交表单(文字)
+app.post('/talk',(req, res)=>{
+    upload(req,res,(err)=>{
             // 存储信息
             // 获取body 所有字段名
             let query = req.body;
@@ -88,8 +104,9 @@ app.post('/talk',(req,res,next)=>{
             let data = {
                 userName: null,
                 content: query.content,
-                images: imgName,
-                created: new Date().getTime()
+                images: query.images,
+                created: new Date().getTime(),
+                likes: 0,
             }
 
             //回复字典信息
@@ -103,6 +120,7 @@ app.post('/talk',(req,res,next)=>{
                 info: info.fail,
             };
 
+
             // 查找用户名
             let whereStr = {
                 _id:ObjectID(query.userID)
@@ -115,6 +133,7 @@ app.post('/talk',(req,res,next)=>{
                         res.json(JSON.stringify(result));
                     }else{
                         data.userName = rs.shift().userName;
+                        
                         // 插入数据库
                         db.insertOne(collection, data, (err, results)=>{
                             if (err) {
@@ -134,13 +153,8 @@ app.post('/talk',(req,res,next)=>{
                     }
                 }
             })
-
-            
-            
-        }
-
-    });
-});
+    })
+})
 
 
 // 评论
@@ -154,8 +168,9 @@ app.post('/comment',(req, res)=>{
         let data = {
             userName: null,
             talkID: query.talkID,
-            for: query.userName,
+            for: query.for,
             content: query.content,
+            likes: 0,
             created: new Date().getTime()
         }
 
@@ -168,6 +183,7 @@ app.post('/comment',(req, res)=>{
         var result = {
             status:0,
             info: info.fail,
+            comment: {}
         };
 
 
@@ -191,8 +207,11 @@ app.post('/comment',(req, res)=>{
                             if(results.insertedCount ==1){
                                 result.status = 1;
                                 result.info = info.ok;
+                                data.commentID = data._id
+                                delete data._id;
+                                result.comment = data
                                 //返回
-                                res.json(JSON.stringify(result));
+                                res.json(result);
                             }else{
                                 //返回
                                 res.json(JSON.stringify(result));
@@ -208,6 +227,10 @@ app.post('/comment',(req, res)=>{
 
 // 圈子，分组查找，再组合
 app.post('/show',(req, res)=>{
+    upload(req,res,(err)=>{
+    // 接收请求的数据
+    let query = req.body;
+
     // 返回所有说说的内容
     let arrTalk = new Array(0);
     // 查找所有说说
@@ -221,44 +244,97 @@ app.post('/show',(req, res)=>{
         if (err) {
             res.send(502);
         }else{
-            // 所有评论       
-            let colComment = "social_comment";
-            db.findAndSort(colComment,null,sort,(err, comrs)=>{ 
+            
+            // 查找关注
+            db.find("focus",{userID: query.userID}, (err, rs)=>{
                 if (err) {
                     res.send(502);
                 }else{
-                    talkrs.forEach((talk)=>{
-                        // 查找说说相应的评论
-                        let talk_comment={
-                            userName: talk.userName,
-                            content: talk.content,
-                            images: talk.images.split('|'),
-                            created: talk.created,
-                            comment: comrs.filter((c)=> {return c.talkID == talk._id }),
-                        };
-                        arrTalk.push(talk_comment);  
-                    })
-                    
-                    res.send(arrTalk);
+                    // console.log(rs)
+                    allcomment(rs)
                 }
             })
+
+
+             // 所有评论  
+            let allcomment = (fcs)=>{
+                let colComment = "social_comment";
+                sort.created = 1;
+                db.findAndSort(colComment,null,sort,(err, comrs)=>{ 
+                    if (err) {
+                        res.send(502);
+                    }else{
+                        // 返回喜欢的人数，是否已经喜欢
+                         let lk = (likeStr, userID)=>{
+                            // 喜欢的人
+                            let l = likeStr == 0 || likeStr == undefined? [] : likeStr.split('|');
+                            // 是否已经喜欢
+                            let led = false;
+                            if(l.length !=0 && l.find((id)=>{ return id == userID }) !=undefined){
+                                led = true;
+                            }
+
+                            return {
+                                islike: led,
+                                count: l.length
+                            }
+                        }
+
+                        // 循环获取数据
+                        talkrs.forEach((talk)=>{
+                            let likeMsg = lk(talk.likes, query.userID);
+
+                            // 返回的数据
+                            let talk_comment={
+                                talkID: talk._id,
+                                userName: talk.userName,
+                                content: talk.content,
+                                images: talk.images ==null ? null : talk.images.split('|'),
+                                created: talk.created,
+                                likes: likeMsg.count,
+                                liked: likeMsg.islike,
+                                focus: fcs.some((c)=> {return c.focusName == talk.userName }),
+                                comment: comrs.filter((c)=> {return c.talkID == talk._id }), // 查找说说相应的评论
+                            };
+                            for (let i = 0; i < talk_comment.comment.length; i++) {
+                                likeMsg = lk(talk_comment.comment[i].likes, query.userID);
+                                talk_comment.comment[i].commentID = talk_comment.comment[i]._id;
+                                talk_comment.comment[i].likes = likeMsg.count;
+                                talk_comment.comment[i].liked = likeMsg.islike;
+                                delete talk_comment.comment[i]._id;
+                                delete talk_comment.comment[i].talkID;
+                            }
+                            arrTalk.push(talk_comment);  
+                        })
+
+                        res.send(arrTalk);
+                    }
+                })
+            }      
+            
         }
     })
-
-    
-
-
 })
+})
+
+// 说说点赞 
+let likes = require('./likes.js')
+app.post('/talk_like',multer().array() ,likes.talk_like)
+
+// 关注点赞
+app.post('/comment_like',multer().array() ,likes.comment_like)
+
+let focus = require('./focus.js')
+app.post('/focus',multer().array(),focus.fc)
 
 // 请求朋友圈图片 images
 app.all('/imgs',(req, res)=>{
-    upload(req,res,(err)=>{
-        let query = req.body;
-        console.log(query)
-        // 文件路劲
-        let pathName = uploadDir + query.images;
-        res.sendfile(pathName)
-    })
+    let query = req.query;
+    console.log(query)
+    // 文件路劲
+    let pathName = uploadDir + query.images;
+    console.log(pathName);
+    res.sendfile(pathName)
 })
 
 

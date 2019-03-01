@@ -35,7 +35,7 @@ app.use(function(err, req, res, next) {
 
   // render the error page
   res.status(err.status || 500);
-  res.json(JSON.parse(JSON.stringify({ info: 'error'})));
+  res.json(JSON.parse(JSON.stringify({ status:0,info: 'app error'})));
 });
 
 module.exports = app;
