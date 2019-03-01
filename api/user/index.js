@@ -187,5 +187,13 @@ upload.array(), (req, res, next)=>{   // 字段判断
 });
 }
 
+let avatar = require('./avatar.js');
+let avatar_path = './public/avatar/'; //设置文件存储路径
+
+app.post('/avatar', multer({
+   dest: avatar_path   //upload文件如果不存在则会自己创建一个。
+}).single('file'), avatar.upload);
+
+app.get('/avatar', upload.array(), avatar.load);
 
 module.exports = app;
