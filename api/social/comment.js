@@ -53,11 +53,26 @@ let toComment = (req, res)=>{
         comment: {}
     };
 
+    // 返回数据
+    let ret = (results)=>{
+        if(results.insertedCount ==1){
+            result.status = 1;
+            result.info = info.ok;
+            data.commentID = data._id
+            delete data._id;
+            result.comment = data
+            //返回
+            res.json(result);
+        }else{
+            //返回
+            res.json(JSON.stringify(result));
+        }
+    }
 
     // 查找用户名
     let user = require('../user/userMsg.js')
     user.getUserMsg(query)      // 查找用户名
-    .then((userMsg)=>{
+    .then(([userMsg])=>{
         if(userMsg.length != 0){
             data.userName = userMsg.userName;   // 获得用户名
             // 插入数据库
@@ -65,18 +80,7 @@ let toComment = (req, res)=>{
                 if (err) {
                     res.send(502);
                 }else{
-                    if(results.insertedCount ==1){
-                        result.status = 1;
-                        result.info = info.ok;
-                        data.commentID = data._id
-                        delete data._id;
-                        result.comment = data
-                        //返回
-                        res.json(result);
-                    }else{
-                        //返回
-                        res.json(JSON.stringify(result));
-                    }
+                    ret(results)   // 数据返回
                 }
             })
         }else{

@@ -141,6 +141,33 @@ let fc = (req, res, next)=>{
 }   
 
 
+// 获取个人关注情况
+let getFocus = (req, res)=>{
+    let query = req.body;
+
+    // 获得数据
+    fcCount({
+        userID: query.userID
+    })
+    .then(((rs)=>{
+        console.log(rs)
+        let fcs = new Array(0);
+        rs.forEach(fc => {
+            let x = {
+                focusName: fc.focusName,
+                userID: fc.userID,
+                created: fc.created,
+            }
+            fcs.push(x)
+        });
+        let ret = {
+            focusCount: rs.length,
+            fcs: fcs
+        }
+        res.send(ret)
+    }))
+}
+
 // 根据 userID 获取关注
 let fcCount = (whereStr)=>{
     return new Promise((resolve, reject)=>{
@@ -155,8 +182,8 @@ let fcCount = (whereStr)=>{
 }
 
 
-
 module.exports = {
     "fc" : fc,
-    fcCount : fcCount
+    getFocus: getFocus,
+    fcCount : fcCount,
 }
