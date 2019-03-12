@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>socket.io演示客户端</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.1.1/socket.io.js"></script>
+    <style>
+        div,input,button{
+            display: block;
+            margin:  auto;
+            padding: 0.5em;
+            min-width: 5em;
+            font-size: 1em;
+        }
+       
+        h1{
+            margin: 2em;
+            text-align: center;
+        }
+
+    </style>
+</head>
+<body>
+<h1>socket.io演示客户端</h1>
+<div>
+    <input type="text" placeholder="自己id" id="userName"> 
+    <br><button id="get">get</button>
+    <br><input type="text" placeholder="消息" id="msg">
+    <br><input type="text" placeholder="接收者id" id="rec">
+    <br><button id="sayTo">send</button>
+</div>
+
+</body>
+<script>
+    $=function (id) {
+        return document.getElementById(id);
+    };
+    var socket = io.connect('http://localhost:3000');
+
+    // 传达自己的id，获取未接受的数据
+    $("get").onclick=()=>{
+        socket.emit("unreceived",{"userID":$("userName").value});
+    }
+
+    var sayTo = $("sayTo"),
+    msg = $("msg"),
+    word = $("word"),
+    rec=$("rec");
+
+    sayTo.onclick=function () {
+        var toMsg=msg.value;
+        socket.emit("msg",{"userID":$("userName").value,"to":rec.value,"msg":toMsg});
+    };
+    
+    // 当收到对方发来的数据后触发 message 事件
+    socket.on('msg',function (data) {
+        console.log(data)
+    });
+    // 当收到对方发来的数据后触发 message 事件
+    socket.on('news',function (data) {
+        console.log(data)
+    });
+</script>
+</html>
