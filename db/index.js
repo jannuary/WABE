@@ -2,7 +2,8 @@
 const dbname = "wise"
 
 const MongoClient = require('mongodb').MongoClient;
-var DB_CONN_STR = `mongodb://120.79.95.188:27017/${dbname}`;
+// var DB_CONN_STR = `mongodb://120.79.95.188:27017/${dbname}`;
+var DB_CONN_STR = `mongodb://localhost:27017/${dbname}`;
 
 // let collection = "site";
 
