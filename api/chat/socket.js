@@ -1,4 +1,7 @@
-var _ = require('underscore');
+const _ = require('underscore');
+
+// 连接用户的基本信息
+const userMsg = require('../user/userMsg.js');
 
 // 储存上线的用户 [sender => socketid]
 let onlineName = new Map();
@@ -9,6 +12,7 @@ let outlineName = new Set();
 // 信息
 let msg =new Set();
 
+
 // 处理接收时的事件
 let socket_do = (socket, io)=>{
 
@@ -16,9 +20,14 @@ let socket_do = (socket, io)=>{
     // 将未接收的信息转化为数组
     socket.on('unreceived', function (data) {
         let userID = data.userID
-        console.log("unrece=>"+userID);
+
+        // 储存上线的用户
+        onlineName.set(userID,socket.id);
+
+        console.log(onlineName);
+
+        // 刚开始连接的时候，查找自己未接收的信息
         let sendmsg = Array.from(msg)
-        console.log(sendmsg);
         sendmsg.forEach((x)=>{  // 查找自己的信息
             if( x.receiver == userID ){
                 // 发送
@@ -28,7 +37,6 @@ let socket_do = (socket, io)=>{
             }
         })
     })
-
 
 
     // 给特定的用户发信息
@@ -56,7 +64,6 @@ let socket_do = (socket, io)=>{
             let toSocket = _.findWhere(io.sockets.sockets, {id: toId});
            
 
-
             // 通过该连接对象（toSocket）与链接到这个对象的客户端进行单独通信
             if(toSocket != undefined){
                 toSocket.emit('msg', m);
@@ -71,10 +78,55 @@ let socket_do = (socket, io)=>{
             
             msg.add(m)
 
-           
         }
         
     });
+
+    // 匹配, 使用的是随机的分配
+    socket.on('match',(data)=>{
+        let size = onlineName.size;
+        let persons = Array.from(onlineName);
+        let rand = ()=>{
+            return (Math.floor(Math.random()*size));
+        }
+        
+        // 返回的数据
+        let res = {
+            status: 0,
+            matchUserID: undefined,
+            matchUserName: undefined,
+            info: undefined,
+        }
+        console.log(onlineName)
+        
+        if(size >1 ){  // 如果在线人数2个以上，才进行匹配返回
+            let rd = rand();
+            let i=0;        // 防止死循环
+            while(persons[rd][1] == socket.id && i++ !=20){
+                rd = rand();
+            }
+            
+
+            userMsg.getUserMsg({
+                userID: persons[rd][0],
+            })
+            .then(msg=>{
+                if(msg.length!==0){
+                    res = {
+                        status: 1,
+                        matchUserID: persons[rd][0],
+                        matchUserName: msg[0].userName,
+                    }
+                }else{
+                    res.info = "user err.";
+                }
+                socket.emit("match",res);
+            })
+        }else{
+            res.info = "no people online.";
+            socket.emit("match",res);
+        }
+    })
 
     // 当关闭连接后触发 disconnect 事件
     socket.on('disconnect', function () {
@@ -99,6 +151,8 @@ let socket_do = (socket, io)=>{
 }
 
 
+
 module.exports = {
     socket_do: socket_do
 }
+
